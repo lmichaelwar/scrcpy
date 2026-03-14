@@ -297,6 +297,9 @@ public final class WindowManager {
                     return true;
                 }
                 // Silently accept any organizer callback transactions
+                if ((flags & IBinder.FLAG_ONEWAY) == 0 && reply != null) {
+                    reply.writeNoException();
+                }
                 return true;
             }
         };
@@ -304,8 +307,14 @@ public final class WindowManager {
         Object daoController = null;
         try {
             // Get the IWindowOrganizerController via ServiceManager
-            IInterface windowOrganizerController = ServiceManager.getService("window_organizer",
-                    "android.window.IWindowOrganizerController");
+            IInterface windowOrganizerController;
+            try {
+                windowOrganizerController = ServiceManager.getService("window_organizer",
+                        "android.window.IWindowOrganizerController");
+            } catch (AssertionError e) {
+                Ln.w("Could not get window_organizer service", e);
+                return;
+            }
             if (windowOrganizerController == null) {
                 Ln.w("window_organizer service not available");
                 return;
